@@ -5,18 +5,17 @@
 	 ,send_recv/2
 	]).
 
--export([listen/1
+-export([listen/2
 	 ,accept_worker/2
 	]).
 
 -define(TCP_OPTIONS, [binary, {reuseaddr, true},{packet, 0}, {active, false}]).
 -define(PORT, 8080).
 
-%% Client functions
 start() ->
     mnesia:start(),
     mnesia:wait_for_tables([account], 1000),
-    start(?PORT).
+    start(?PORT, ?TCP_OPTIONS).
 
 send_recv(Socket, Data)->
     send(Socket,Data),
@@ -28,21 +27,18 @@ stop()->
     ok = gen_tcp:send(Socket, "stop"),
     "stopping" = recv(Socket).
 
-%% server functions    
-start(Port) ->
-    spawn(?MODULE, listen, [Port]),
+%% 
+start(Port, TcpOpt) ->
+    spawn(?MODULE, listen, [Port, TcpOpt]),
     ok.
 
-listen(Port) ->
-    case gen_tcp:listen(Port, [binary, {reuseaddr, true},
-			       {packet, 0}, {active, false}]) of
+listen(Port, TcpOpt) ->
+    case gen_tcp:listen(Port, TcpOpt) of 			       
 	{ok, ListenSock} ->
 	    spawn(?MODULE, accept_worker, [self(), ListenSock]),
 	    loop(ListenSock);
 	{error, Error} ->
-	    {error, Error};
-	Other ->
-	    Other
+	    {error, Error}
     end.
 
 loop(ListenSocket) ->
