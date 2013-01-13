@@ -1,5 +1,7 @@
 Rebar=./rebar
 
+.PHONY: 
+
 compile:
 	$(Rebar) compile
 
@@ -9,8 +11,21 @@ eunit:
 ct:
 	$(Rebar) ct skip-deps=true
 
-.PHONY: all compile test clean
+release:
+	cd rel/
+	$(Rebar) compile generate
 
+##rebar release
+start:
+	rel/game_server/bin/game_server start
+
+attach:
+	rel/game_server/bin/game_server attach
+
+stop:
+	rel/game_server/bin/game_server stop	
+
+##
 all:
 	erlc -o ebin/ src/*.erl test/*.erl
 
@@ -27,6 +42,7 @@ clean:
 	rm -rf test/*.beam
 	rm -rf src/*.*~
 	rm -rf rel/*.*~
+	rm -fr test/logs/*
 	rm -rf Mnesia.nonode@nohost	
 
 init:
