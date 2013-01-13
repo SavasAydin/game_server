@@ -5,8 +5,6 @@ struct:
 	mkdir -p inc/
 all:
 	erlc -o ebin/ src/*.erl test/*.erl
-	
-.PHONY: test
 
 clean:
 	rm -rf *~
@@ -15,6 +13,7 @@ clean:
 	rm -rf src/*.*~
 	rm -rf ebin/*.beam
 	rm -rf logs/*
+	rm -rf rel/*.*~
 	rm -rf Mnesia.nonode@nohost	
 
 init:
@@ -26,3 +25,8 @@ test:
 pack:
 	make clean
 	cd ..; tar hcvf - game_server | gzip > game_server.tgz
+
+ct:
+	ct_run -pa ebin/ -spec game_server.spec
+
+
