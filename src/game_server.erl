@@ -1,12 +1,11 @@
 -module(game_server).
 
--export([
-	 start/0
+-export([start/0
 	 ,stop/0
+	 ,send_recv/2
 	]).
 
--export([
-	 listen/1
+-export([listen/1
 	 ,accept_worker/2
 	]).
 
@@ -19,6 +18,10 @@ start() ->
     mnesia:wait_for_tables([account], 1000),
     start(?PORT).
 
+send_recv(Socket, Data)->
+    send(Socket,Data),
+    recv(Socket).
+
 stop()->
     mnesia:stop(),
     {ok,Socket} = connect("localhost",?PORT,?TCP_OPTIONS),
@@ -27,7 +30,7 @@ stop()->
 
 %% server functions    
 start(Port) ->
-    spawn_link(?MODULE, listen, [Port]),
+    spawn(?MODULE, listen, [Port]),
     ok.
 
 listen(Port) ->
@@ -47,8 +50,7 @@ loop(ListenSocket) ->
 	next_worker ->
 	    spawn_link(?MODULE, accept_worker, [self(), ListenSocket]);
 	stop ->
-	    gen_tcp:close(ListenSocket),
-	    ok
+	    gen_tcp:close(ListenSocket)	
     end,
     loop(ListenSocket).
 
@@ -59,7 +61,6 @@ accept_worker(Self, ListenSocket) ->
 	    handle(Self, AcceptSocket);
 	{error, Reason} ->
 	    {error, Reason}
-
     end.
 
 handle(Self, AcceptSocket)->
@@ -68,6 +69,7 @@ handle(Self, AcceptSocket)->
 	{tcp, Socket, <<"stop">>} ->
 	    send(Socket, "stopping"),
 	    close(Socket),
+	    close(AcceptSocket),
 	    Self ! stop;
 	{tcp, Socket, Data} ->
 	    Reply = analyze(Data),
@@ -79,18 +81,26 @@ handle(Self, AcceptSocket)->
 	    {error, Reason}
     end.
 
-
-%% private functions
+%% 
 analyze(Data)->
     Command = gameLib:decode(Data),
     game:handle_command(Command).
 
 send(Socket, Data)->
-    gen_tcp:send(Socket, gameLib:encode(Data)). 
+    case gen_tcp:send(Socket, gameLib:encode(Data)) of
+	ok ->
+	    ok;
+	{error, Error} ->
+	    {error, Error}
+    end.
 
 recv(Socket)->
-    {ok, Received} = gen_tcp:recv(Socket, 0),
-    gameLib:decode(Received).
+    case gen_tcp:recv(Socket, 0) of
+	{ok, Received} ->
+	    gameLib:decode(Received);
+	Error ->
+	    Error
+    end. 
 
 connect(Host, Port, Options)->
     gen_tcp:connect(Host, Port, Options).
