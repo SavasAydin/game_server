@@ -1,0 +1,3 @@
+-record(account, {name,
+		  password}).
+	
