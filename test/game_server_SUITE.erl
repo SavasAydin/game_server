@@ -19,7 +19,7 @@
 -define(PORT, 8080).
 
 all() ->
-    [group, server_commands,
+    [{group, server_commands},
      try_undefined_command].
 
 group() ->
