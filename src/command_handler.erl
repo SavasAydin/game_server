@@ -13,28 +13,15 @@ perform(_) ->
     {error, undefined_command}.
 
 register([Name, Pass]) ->
-    case mnesia:read({account, Name}) of
-	[]->
-	    F = fun() ->
-			mnesia:write(#account{name=Name
-					      ,password=Pass}) end,
-	    {atomic, _} = mnesia:transaction(F),			
-	    {ok, registered};
-	_Account ->
-	    {error, already_registered}
-    end.
+    store(Name, Pass).
 
 install() ->
     Nodes = [node()],
     ok = mnesia:create_schema(Nodes),
     rpc:multicall(Nodes, application, start, [mnesia]),
-    Table = mnesia:create_table(account, 
-			[{disc_copies,Nodes}
-			 ,{attributes,record_info(fields, account)}
-			 ,{type, bag}
-			]),
+    AccountTable = create_table(Nodes),
     rpc:multicall(Nodes, application, stop, [mnesia]),
-    case Table of 
+    case AccountTable of 
 	{atomic, ok} ->
 	    ok;
 	{aborted, already_exist}  ->
@@ -42,3 +29,23 @@ install() ->
 	{aborted, Else} ->
 	    {error, Else}
     end.
+
+store(Name, Pass) ->
+    case mnesia:read({account, Name}) of
+	[]->
+	    F = fun() ->
+			mnesia:write(#account{name=Name
+					      ,password=Pass})
+		end,
+	    {atomic, _} = mnesia:transaction(F),			
+	    {ok, registered};
+	_ ->
+	    {error, already_registered}
+    end.
+
+create_table(Nodes) ->
+    mnesia:create_table(account, 
+			[{disc_copies,Nodes}
+			 ,{attributes,record_info(fields, account)}
+			 ,{type, bag}
+			]).
