@@ -13,7 +13,13 @@ perform(_) ->
     {error, undefined_command}.
 
 register([Name, Pass]) ->
-    store(Name, Pass).
+    case mnesia:read({account, Name}) of
+	[]->
+	    write_to_mnesia(Name, Pass),
+	    {ok, registered};
+	_ ->
+	    {error, already_registered}
+    end.
 
 install() ->
     Nodes = [node()],
@@ -30,22 +36,17 @@ install() ->
 	    {error, Else}
     end.
 
-store(Name, Pass) ->
-    case mnesia:read({account, Name}) of
-	[]->
-	    F = fun() ->
-			mnesia:write(#account{name=Name
-					      ,password=Pass})
-		end,
-	    {atomic, _} = mnesia:transaction(F),			
-	    {ok, registered};
-	_ ->
-	    {error, already_registered}
-    end.
-
 create_table(Nodes) ->
     mnesia:create_table(account, 
 			[{disc_copies,Nodes}
 			 ,{attributes,record_info(fields, account)}
 			 ,{type, bag}
 			]).
+
+write_to_mnesia(Name, Pass) ->
+    F = fun() ->
+		mnesia:write(#account{name=Name,
+				      password=Pass})
+	end,
+    {atomic, ok} = mnesia:transaction(F).			
+	
