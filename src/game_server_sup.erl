@@ -7,7 +7,7 @@
 	]).
 
 -define(PORT, 8080).
--defıne(TCP_OPTIONS, [{active, once}, {packet, 0}]).
+-define(TCP_OPTIONS, [{active, once}, {packet, 0}]).
 
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
