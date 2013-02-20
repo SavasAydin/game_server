@@ -17,12 +17,12 @@ start_link(LitenSocket) ->
  
 init(ListenSocket) ->
     gen_server:cast(self(), accept),
-    {ok, #state{ListenSocket}}.
+    {ok, #state{socket = ListenSocket}}.
 
 handle_cast(accept, ListenSocket) ->
     {ok, AcceptSocket} = gen_tcp:accept(ListenSocket),
     game_server_sup:start_socket(), 
-    {noreply, #state{AcceptSocket}}.
+    {noreply, #state{socket = AcceptSocket}}.
 
 handle_call(_E, _From, State) ->
     {noreply, State}.
