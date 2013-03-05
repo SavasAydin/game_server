@@ -34,8 +34,9 @@ init([]) ->
 
 handle_cast(accept, State) ->
     {ok, AcceptSocket} = gen_tcp:accept(State#state.lsocket),
-    game_server_sup:start_socket(), 
-    {noreply, #state{asocket = AcceptSocket}}.
+    {noreply, #state{asocket = AcceptSocket}};
+handle_cast(stop, State) ->
+    {stop, normal, State}.
 
 handle_call(_E, _From, State) ->
     {reply, ok, State}.
