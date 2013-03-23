@@ -9,7 +9,6 @@ receive_message_send_ack_test_() ->
      fun cleanup/1,
      [
       fun send_and_receive_hello/0
-%%       fun send_and_receive_hello_twice/0
      ]
     }.
 
@@ -18,14 +17,6 @@ send_and_receive_hello() ->
     ok = send(Sock, "hello"),
     ?assertEqual("hello", recv(Sock)),
     ok = close(Sock).
-
-%% send_and_receive_hello_twice() ->
-%%     {ok, Sock} = connect(8080, [{active,false},{packet,2}]),
-%%     ok = send(Sock, "hello"),
-%%     ?assertEqual("hello", recv(Sock)),
-%%      ok = send(Sock, "hello"),
-%%     ?assertEqual("hello", recv(Sock)),
-%%     ok = close(Sock).    
 
 send(Sock, Msg) ->    
     gen_tcp:send(Sock, Msg).
