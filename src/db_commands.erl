@@ -1,20 +1,33 @@
 -module(db_commands).
 
--export([empty/0,
-	install/0
+-export([new/0,
+	 install/0,
+	 insert/2,
+	 db_to_list/0
 	]).
 
 -record(account, {name, password}).
 
 install() ->
-    Nodes = [node() | nodes()],
-    mnesia:create_schema(Nodes),
+    mnesia:create_schema([node() | nodes()]),
     application:start(mnesia).
 
-empty() ->
+new() ->
     Nodes = [node() | nodes()],
     mnesia:create_table(account, 
 			[{attributes, record_info(fields, account)},
 			 {ram_copies, Nodes}
-			]).
+			]),
+    account.
     
+db_to_list() ->
+    F = fun() -> mnesia:match_object(#account{_ = '_'}) end,
+    {atomic, Accounts} = mnesia:transaction(F),
+    Accounts.
+
+
+insert(Account, Db) ->
+    F = fun() -> mnesia:write(Db, Account, write) end,
+    {atomic, _} = mnesia:transaction(F),
+    Db.
+
