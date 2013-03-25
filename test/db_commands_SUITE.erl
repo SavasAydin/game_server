@@ -48,7 +48,7 @@ insert_account_with_same_name(Config) ->
     Db = ?config(db, Config),
     Savas = ?config(savas, Config),
     SavasDifferentPassword = create_account(savas, different_pass),
-    ok =db_commands:insert(Savas, Db),
+    ok = db_commands:insert(Savas, Db),
     {error, already_exist} = db_commands:insert(SavasDifferentPassword, Db),
     [Savas] = db_commands:db_to_list().
     
