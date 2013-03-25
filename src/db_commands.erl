@@ -7,7 +7,7 @@
 	 get_account/2
 	]).
 
--record(account, {name, password}).
+-include("include/account.hrl").
 
 install() ->
     mnesia:create_schema([node() | nodes()]),

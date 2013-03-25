@@ -3,8 +3,7 @@
 -export([start_link/0, stop/0]).
 -export([acceptor/2, init/1]).
 
--define(PORT, 8080).
--define(TCP_OPTIONS, [binary, {packet, 0}, {active, once}]).
+-include("include/account.hrl").
  
 start_link() ->
     proc_lib:start_link(?MODULE, init, [self()]).
