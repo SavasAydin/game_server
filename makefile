@@ -7,6 +7,7 @@ init:
 .PHONY: eunit
 eunit:
         erl -pa ebin/ -eval 'eunit:test(msg_handler,[verbose]),\
+			     eunit:test(tcp_server,[verbose]),\	
                              init:stop().'
 
 clean:
