@@ -8,14 +8,17 @@
 	 end_per_suite/1
 	]).
 -export([insert_account/1,
-	 insert_multiple_and_get_by_name/1
+	 insert_account_with_same_name/1,
+	 get_account_by_name/1
 	]).
 
 -record(account, {name, password}).
 
 all() ->
     [insert_account,
-    insert_multiple_and_get_by_name].
+     insert_account_with_same_name,
+     get_account_by_name
+    ].
 
 init_per_suite(Config) ->
     db_commands:install(),
@@ -26,7 +29,8 @@ end_per_suite(Config) ->
 
 init_per_testcase(_TestCase, Config) ->
     Db = db_commands:new(),
-    [{db, Db} | Config].
+    Savas = create_account(savas, pass),
+    [{db, Db}, {savas, Savas} | Config].
 
 end_per_testcase(_TestCase, Config) ->
     Db = ?config(db, Config),
@@ -35,20 +39,28 @@ end_per_testcase(_TestCase, Config) ->
 
 insert_account(Config) ->
     Db = ?config(db, Config),
-    Savas = create_account(savas, pass),
+    Savas = ?config(savas, Config),
     [] = db_commands:db_to_list(),
-    db_commands:insert(Savas, Db),
+    ok =db_commands:insert(Savas, Db),
     [Savas] = db_commands:db_to_list().
 
-insert_multiple_and_get_by_name(Config) ->
+insert_account_with_same_name(Config) ->
     Db = ?config(db, Config),
-    Savas = create_account(savas, pass_aydin),
+    Savas = ?config(savas, Config),
+    SavasDifferentPassword = create_account(savas, different_pass),
+    ok =db_commands:insert(Savas, Db),
+    {error, already_exist} = db_commands:insert(SavasDifferentPassword, Db),
+    [Savas] = db_commands:db_to_list().
+    
+get_account_by_name(Config) ->
+    Db = ?config(db, Config),
+    Savas = ?config(savas, Config),
     Gianfranco = create_account(gianfranco, pass_alongi),
-    InsertSavas = db_commands:insert(Savas, Db),
-    InsertGianfranco = db_commands:insert(Gianfranco, InsertSavas),
+    ok = db_commands:insert(Savas, Db),
+    ok = db_commands:insert(Gianfranco, Db),
     [Savas,Gianfranco] = db_commands:db_to_list(),
-    [Gianfranco] = db_commands:get_account(gianfranco, InsertGianfranco),
-    {error, not_exists} = db_commands:get_account(simon, InsertGianfranco). 
+    [Gianfranco] = db_commands:get_account(gianfranco, Db),
+    {error, not_exist} = db_commands:get_account(simon, Db). 
 
 create_account(Name, Password) ->
     #account{name = Name, password = Password}.

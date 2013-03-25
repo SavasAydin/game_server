@@ -27,17 +27,27 @@ db_to_list() ->
     lists:reverse(Accounts).
 
 insert(Account, Db) ->
-    F = fun() -> mnesia:write(Db, Account, write) end,
-    {atomic, _} = mnesia:transaction(F),
-    Db.
+    F = fun() -> insert_unless_account_exists(Account, Db) end,
+    {atomic, Reply} = mnesia:transaction(F),
+    Reply.
+
+insert_unless_account_exists(Account, Db) ->
+    case mnesia:read(Db, Account#account.name) of 
+	[] ->
+	    mnesia:write(Db, Account, write);
+	_ ->
+	    {error, already_exist}
+    end.
 
 get_account(AccountName, Db) ->
-    F = fun() -> case mnesia:read(Db, AccountName) of 
-		     [] ->
-			 {error, not_exists};
-		     Account ->
-			 Account
-		 end
-	end,
+    F = fun() -> check_if_account_exists(AccountName, Db) end, 
     {atomic, Account} = mnesia:transaction(F),
     Account.
+
+check_if_account_exists(AccountName, Db) ->
+    case mnesia:read(Db, AccountName) of 
+	[] ->
+	    {error, not_exist};
+	Account ->
+	    Account
+    end.
