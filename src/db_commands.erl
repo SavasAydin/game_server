@@ -4,6 +4,7 @@
 	 install/0,
 	 db_to_list/0,
 	 insert/2,
+	 delete/2,
 	 get_account/2
 	]).
 
@@ -35,19 +36,34 @@ insert_unless_account_exists(Account, Db) ->
     case mnesia:read(Db, Account#account.name) of 
 	[] ->
 	    mnesia:write(Db, Account, write);
-	_ ->
+	[_] ->
 	    {error, already_exist}
     end.
 
 get_account(AccountName, Db) ->
-    F = fun() -> check_if_account_exists(AccountName, Db) end, 
+    F = fun() -> get_if_account_exists(AccountName, Db) end, 
     {atomic, Account} = mnesia:transaction(F),
     Account.
 
-check_if_account_exists(AccountName, Db) ->
+get_if_account_exists(AccountName, Db) ->
     case mnesia:read(Db, AccountName) of 
 	[] ->
 	    {error, not_exist};
 	Account ->
 	    Account
     end.
+
+delete(Account, Db) ->
+    F = fun() -> delete_if_account_exists(Account, Db) end,
+    {atomic, Reply} = mnesia:transaction(F),
+    Reply.
+
+delete_if_account_exists(Account, Db) ->
+    case mnesia:read(Db, Account#account.name) of 
+	[] ->
+	    {error, not_exist};
+	[Account] ->
+	    mnesia:delete(Db, Account#account.name, write)	    
+    end.
+
+		

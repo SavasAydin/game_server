@@ -9,7 +9,8 @@
 	]).
 -export([insert_account/1,
 	 insert_account_with_same_name/1,
-	 get_account_by_name/1
+	 get_account_by_name/1,
+	 delete_account_by_name/1
 	]).
 
 -record(account, {name, password}).
@@ -17,14 +18,15 @@
 all() ->
     [insert_account,
      insert_account_with_same_name,
-     get_account_by_name
+     get_account_by_name,
+     delete_account_by_name
     ].
 
 init_per_suite(Config) ->
     db_commands:install(),
     Config.
 
-end_per_suite(Config) ->
+end_per_suite(_Config) ->
     mnesia:stop().
 
 init_per_testcase(_TestCase, Config) ->
@@ -48,7 +50,7 @@ insert_account_with_same_name(Config) ->
     Db = ?config(db, Config),
     Savas = ?config(savas, Config),
     SavasDifferentPassword = create_account(savas, different_pass),
-    ok = db_commands:insert(Savas, Db),
+    ok =db_commands:insert(Savas, Db),
     {error, already_exist} = db_commands:insert(SavasDifferentPassword, Db),
     [Savas] = db_commands:db_to_list().
     
@@ -61,6 +63,15 @@ get_account_by_name(Config) ->
     [Savas,Gianfranco] = db_commands:db_to_list(),
     [Gianfranco] = db_commands:get_account(gianfranco, Db),
     {error, not_exist} = db_commands:get_account(simon, Db). 
+
+delete_account_by_name(Config) ->
+    Db = ?config(db, Config),
+    Savas = ?config(savas, Config),
+    ok = db_commands:insert(Savas, Db),
+    [Savas] = db_commands:db_to_list(),
+    ok = db_commands:delete(Savas, Db),
+    [] = db_commands:db_to_list(),
+    {error, not_exist} = db_commands:delete(Savas, Db).
 
 create_account(Name, Password) ->
     #account{name = Name, password = Password}.
