@@ -1,4 +1,5 @@
 -module(db_commands_SUITE).
+
 -include_lib("common_test/include/ct.hrl").
 
 -export([all/0,
@@ -10,7 +11,8 @@
 -export([insert_account/1,
 	 insert_account_with_same_name/1,
 	 get_account_by_name/1,
-	 delete_account_by_name/1
+	 delete_existing_account/1,
+	 delete_non_existing_account/1
 	]).
 
 -record(account, {name, password}).
@@ -19,7 +21,8 @@ all() ->
     [insert_account,
      insert_account_with_same_name,
      get_account_by_name,
-     delete_account_by_name
+     delete_existing_account,
+     delete_non_existing_account
     ].
 
 init_per_suite(Config) ->
@@ -64,15 +67,20 @@ get_account_by_name(Config) ->
     [Gianfranco] = db_commands:get_account(gianfranco, Db),
     {error, not_exist} = db_commands:get_account(simon, Db). 
 
-delete_account_by_name(Config) ->
+delete_existing_account(Config) ->
     Db = ?config(db, Config),
     Savas = ?config(savas, Config),
     ok = db_commands:insert(Savas, Db),
     [Savas] = db_commands:db_to_list(),
     ok = db_commands:delete(Savas, Db),
+    [] = db_commands:db_to_list().
+
+delete_non_existing_account(Config) ->
+    Db = ?config(db, Config),
+    Savas = ?config(savas, Config),
     [] = db_commands:db_to_list(),
     {error, not_exist} = db_commands:delete(Savas, Db).
-
+    
 create_account(Name, Password) ->
     #account{name = Name, password = Password}.
 
