@@ -9,12 +9,21 @@ msg_handler_test_() ->
      fun setup/0,
      fun cleanup/1,
      [
-      fun register_account/0
+      fun register_account/0,
+      fun deregister_account/0
      ]}.
 
 register_account() ->
     Savas = create_account(savas, pass),
-    ?assertEqual(ok, msg_handler:register(Savas)).
+    [] =  msg_handler:get_accounts(),
+    ?assertEqual(ok, msg_handler:register_account(Savas)),
+    ?assertEqual([Savas], msg_handler:get_accounts()).
+
+deregister_account() ->
+    Savas = create_account(savas, pass),
+    [Savas] =  msg_handler:get_accounts(),
+    ?assertEqual(ok, msg_handler:deregister_account(Savas)),
+    [] =  msg_handler:get_accounts().
 
 setup() ->
     ok = mnesia:start(),
