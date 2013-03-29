@@ -1,15 +1,15 @@
 -module(tcp_server).
 
--export([start_link/0, stop/0]).
+-export([start_link/0, stop/1]).
 -export([acceptor/2, init/1]).
 
 -include("include/account.hrl").
- 
+
 start_link() ->
     proc_lib:start_link(?MODULE, init, [self()]).
 
-stop() ->
-     ?MODULE ! stop.
+stop(Pid) ->
+    Pid ! stop.
 
 init(Parent) ->
     process_flag(trap_exit, true),
@@ -18,9 +18,8 @@ init(Parent) ->
     proc_lib:init_ack(Parent, {ok, self()}),
     acceptor(Parent, ListenSocket).
 
-acceptor(Parent,ListenSocket) ->
+acceptor(_Parent,ListenSocket) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
-    tcp_server_sup:start_child(Parent),
     loop(Socket).
 
 loop(Socket) ->

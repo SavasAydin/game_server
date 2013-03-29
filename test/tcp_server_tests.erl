@@ -30,12 +30,13 @@ close(Sock) ->
 
 connect(Port, TcpOptions) ->
     gen_tcp:connect("localhost", Port, TcpOptions).
-    
+
 setup() ->
-    {ok, Pid} = tcp_server_sup:start_link(),
+    {ok, Pid} = tcp_server:start_link(),
     Pid.
 
-cleanup(_) ->
-    tcp_server_sup:stop().
+cleanup(Pid) ->
+    tcp_server:stop(Pid).
 
-    
+
+
