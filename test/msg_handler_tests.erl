@@ -47,13 +47,15 @@ perform_commands(ReturnValue, Fun, Args) ->
     end.
 
 setup() ->
+    ok = db_commands:create_schema_if_not_exists(),
     ok = mnesia:start(),
     {ok, Pid} = msg_handler:start_link(),
     Pid.
 
-cleanup(_Pid) ->
+cleanup(_) ->
     mnesia:stop(),
-    ok = msg_handler:stop().
+    ok = msg_handler:stop(),
+    ok = db_commands:delete_schema_if_exists().
 
 savas() ->
     #account{name = savas, password = pass}.

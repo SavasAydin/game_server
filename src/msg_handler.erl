@@ -24,14 +24,13 @@ get_accounts() -> gen_server:call(?MODULE, get_accounts).
 get_account(AccountName) -> gen_server:call(?MODULE, {get_account, AccountName}).
 
 deregister_account(Account) -> gen_server:call(?MODULE, {deregister, Account}).
-    
+
 stop() -> gen_server:cast(?MODULE, stop).
 
 init([]) ->
     process_flag(trap_exit, true),
-    db_commands:install(),
-    db_commands:new(),
-     ok = mnesia:wait_for_tables([account], 100),
+    account = db_commands:new(),
+    ok = mnesia:wait_for_tables([account], 100),
     Accounts = db_commands:db_to_list(),
     {ok, #state{accounts = Accounts}}.
 
