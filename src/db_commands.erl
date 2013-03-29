@@ -1,7 +1,8 @@
 -module(db_commands).
 
 -export([new/0,
-	 install/0,
+	 create_schema_if_not_exists/0,
+	 delete_schema_if_exists/0,
 	 db_to_list/0,
 	 insert/2,
 	 delete/2,
@@ -9,10 +10,22 @@
 	]).
 
 -include("include/account.hrl").
+    
+create_schema_if_not_exists() ->
+    case mnesia:system_info(db_nodes) of 
+	[] ->
+	    mnesia:create_schema([node() | nodes()]);
+	[_] ->
+	    ok
+    end.
 
-install() ->
-    mnesia:create_schema([node() | nodes()]),
-    application:start(mnesia).
+delete_schema_if_exists() ->
+    case mnesia:system_info(db_nodes) of 
+	[] ->
+	    ok;
+	Nodes ->
+	    mnesia:delete_schema(Nodes)
+    end.
 
 new() ->
     Nodes = [node() | nodes()],

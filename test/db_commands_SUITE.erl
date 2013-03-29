@@ -26,12 +26,14 @@ all() ->
     ].
 
 init_per_suite(Config) ->
-    db_commands:install(),
+    ok = db_commands:create_schema_if_not_exists(),
+    ok = mnesia:start(),
     Config.
 
 end_per_suite(_Config) ->
-    mnesia:stop().
-
+    ok = mnesia:stop(),
+    ok = db_commands:delete_schema_if_exists().
+    
 init_per_testcase(_TestCase, Config) ->
     Db = db_commands:new(),
     Savas = create_account(savas, pass),
