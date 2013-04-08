@@ -1,7 +1,7 @@
 -module(db_commands).
 
 -export([new/0,
-	 create_schema_if_not_exists/0,
+	 create_schema_if_not_exist/0,
 	 delete_schema_if_exists/0,
 	 db_to_list/0,
 	 insert/2,
@@ -11,7 +11,7 @@
 
 -include("include/account.hrl").
     
-create_schema_if_not_exists() ->
+create_schema_if_not_exist() ->
     case mnesia:system_info(db_nodes) of 
 	[] ->
 	    mnesia:create_schema([node() | nodes()]);
@@ -33,6 +33,7 @@ new() ->
 			[{attributes, record_info(fields, account)},
 			 {ram_copies, Nodes}
 			]),
+    ok = mnesia:wait_for_tables([account], 100),
     account.
     
 db_to_list() ->

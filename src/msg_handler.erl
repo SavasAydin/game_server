@@ -10,6 +10,7 @@
 	 get_account/1,
 	 deregister_account/1,
 	 stop/0]).
+
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
@@ -29,21 +30,26 @@ stop() -> gen_server:cast(?MODULE, stop).
 
 init([]) ->
     process_flag(trap_exit, true),
+    ok = db_commands:create_schema_if_not_exist(),
     account = db_commands:new(),
-    ok = mnesia:wait_for_tables([account], 100),
     Accounts = db_commands:db_to_list(),
     {ok, #state{accounts = Accounts}}.
 
 handle_call({register, Account}, _From, State) ->
-    {reply, db_commands:insert(Account, account), State#state{accounts=db_commands:db_to_list()}};
+    Reply = db_commands:insert(Account, account),
+    Accounts = db_commands:db_to_list(),
+    {reply, Reply, State#state{accounts = Accounts}};
 handle_call(get_accounts, _From, State) ->
     {reply, State#state.accounts, State};
 handle_call({get_account, AccountName}, _From, State) ->
     {reply, db_commands:get_account(AccountName, account), State};
 handle_call({deregister, Account}, _From, State) ->
-    {reply, db_commands:delete(Account, account), State#state{accounts=db_commands:db_to_list()}}.
+    Reply = db_commands:delete(Account, account),
+    Accounts = db_commands:db_to_list(),
+    {reply, Reply, State#state{accounts = Accounts}}.
 
 handle_cast(stop, State) ->
+    ok = db_commands:delete_schema_if_exists(),
     {stop, normal, State}.
 
 handle_info(_Info, State) ->
