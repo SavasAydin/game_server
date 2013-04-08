@@ -1,0 +1,23 @@
+game_server
+===========
+
+A Generic game server developed using Erlang. Aims to host online games. 
+
+MUST
+M1: A tcp server accepts connections on specified port from one or more computers.
+      
+M2: User can register.
+
+-spec(register(string(),string()) ->  ok | {error, already_exist}). 
+Register command stores username and password in Mnesia database.    	     
+
+M3: Mnesia is to store user information
+
+M4: Client can deregister.
+-spec(deregister(string(),string()) -> ok | {error, not_exist}). 
+				     
+SHOULD
+S1: Mochiweb
+
+COULD
+C1: Users can send IM 
