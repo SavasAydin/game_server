@@ -5,3 +5,6 @@ ebin
 *~
 #*
 *#
+Emakefile
+makefile
+*.spec
