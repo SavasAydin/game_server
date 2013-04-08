@@ -1,9 +1,0 @@
-{release,
- {"tcp_server", "1.0"},
- {erts, "5.9.2"},
- [{kernel, "2.15.2"},
-  {stdlib, "1.18.2"},
-  {tcp_server, "1.0"},
-  {mnesia, "4.7.1"}
-  ]
-}.
