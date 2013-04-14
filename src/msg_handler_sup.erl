@@ -6,13 +6,11 @@
 -export([init/1]).
 
 start_link() ->
-    io:format("start msg_handler_sup ..~n"),
-    supervisor:start_link({local, ?MODULE}, ?MODULE, no_args).
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
-init(no_args) ->
-    io:format("init msg_handler_sup ...~p~n", [?MODULE]),
-    {ok, {{one_for_one, 5, 2000},
-          [child(msg_handler)]}}.
+init([]) ->
+    MsgHandler = child(msg_handler),
+    {ok, {{simple_one_for_one, 5, 2000},[MsgHandler]}}.
 
 child(Module) ->
     {Module, {Module, start_link, []}, 

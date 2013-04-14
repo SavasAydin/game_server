@@ -4,7 +4,9 @@
 
 -include("include/account.hrl").
 
--export([start_link/0, 
+-export([start_handler/1,
+	 start_link/0, 
+	 start_link/1,
 	 register_account/1,
 	 get_accounts/0,
 	 get_account/1,
@@ -16,17 +18,30 @@
 
 -record(state, {accounts}).
 
-start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_handler(Name) ->
+    supervisor:start_child(msg_hanler_sup, [Name]).
 
-register_account(Account) -> gen_server:call(?MODULE, {register, Account}).
+start_link(Name) -> 
+    NameString = atom_to_list(?MODULE) ++ "_" ++ binary_to_list(Name),
+    gen_server:start_link({local, list_to_atom(NameString)},?MODULE,[],[]).
 
-get_accounts() -> gen_server:call(?MODULE, get_accounts).
+start_link() ->
+    gen_server:start_link({local, ?MODULE},?MODULE,[],[]).
 
-get_account(AccountName) -> gen_server:call(?MODULE, {get_account, AccountName}).
+register_account(Account) -> 
+    gen_server:call(?MODULE, {register, Account}).
 
-deregister_account(Account) -> gen_server:call(?MODULE, {deregister, Account}).
+get_accounts() -> 
+    gen_server:call(?MODULE, get_accounts).
 
-stop() -> gen_server:cast(?MODULE, stop).
+get_account(AccountName) -> 
+    gen_server:call(?MODULE, {get_account, AccountName}).
+
+deregister_account(Account) -> 
+    gen_server:call(?MODULE, {deregister, Account}).
+
+stop() -> 
+    gen_server:cast(?MODULE, stop).
 
 init([]) ->
     process_flag(trap_exit, true),
