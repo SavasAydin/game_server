@@ -20,6 +20,8 @@ init(Parent) ->
 
 acceptor(_Parent,ListenSocket) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
+    Instance = term_to_binary(Socket),
+    msg_handler:start_link(Instance),
     loop(Socket).
 
 loop(Socket) ->
