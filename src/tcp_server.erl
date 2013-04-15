@@ -1,40 +1,52 @@
 -module(tcp_server).
 
--export([start_link/0, stop/1]).
--export([acceptor/2, init/1]).
+-export([start_link/1, stop/0]).
+-export([accept_loop/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
 
 -include("include/account.hrl").
 
-start_link() ->
-    proc_lib:start_link(?MODULE, init, [self()]).
+-record(state, {loop,
+		lsocket}).
 
-stop(Pid) ->
-    Pid ! stop.
+start_link(Loop) ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, Loop, []).
 
-init(Parent) ->
+init(Loop) ->
     process_flag(trap_exit, true),
-    register(?MODULE, self()),
-    {ok, ListenSocket} = gen_tcp:listen(?PORT, ?TCP_OPTIONS),
-    proc_lib:init_ack(Parent, {ok, self()}),
-    acceptor(Parent, ListenSocket).
+    {ok, LSocket} = gen_tcp:listen(?PORT, ?TCP_OPTIONS),
+    State = #state{lsocket = LSocket, loop = Loop},
+    {ok, accept(State)}.
 
-acceptor(_Parent,ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    Instance = term_to_binary(Socket),
-    msg_handler:start_link(Instance),
-    loop(Socket).
+accept_loop({Server, LSocket, {M, F}}) ->
+    {ok, Socket} = gen_tcp:accept(LSocket),
+    gen_server:cast(Server, {accepted, self()}),
+    Name = binary_to_list(term_to_binary(Socket)),
+    M:F(Name).
 
-loop(Socket) ->
-    inet:setopts(Socket, [binary, {nodelay, true}, {active, once}]),
-    receive
-	{tcp, Socket, Data} ->    
-	    gen_tcp:send(Socket, Data),
-	    loop(Socket);
-	{tcp_closed, Socket} ->
-	    {error, disconnected};
-	stop -> 
-	    terminate(Socket, normal)
-    end.
+accept(State = #state{lsocket=LSocket, loop = Loop}) ->
+    process_flag(trap_exit, true),
+    proc_lib:spawn_link(?MODULE, accept_loop, [{self(), LSocket, Loop}]),
+    State.
 
-terminate(_, Reason) ->
-    exit(Reason).
+stop() -> 
+    gen_server:cast(?MODULE, stop).
+
+handle_cast({accepted, _Pid}, State=#state{}) ->
+    {noreply, accept(State)};
+handle_cast(stop, State) ->
+    {stop, normal, State}.
+
+handle_call(_Msg, _Caller, State) ->
+     {reply, ok, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
