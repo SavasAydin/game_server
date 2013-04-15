@@ -9,7 +9,7 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    MsgHandler = child(msg_handler),
+    MsgHandler = child(message_handler),
     {ok, {{simple_one_for_one, 5, 2000},[MsgHandler]}}.
 
 child(Module) ->
