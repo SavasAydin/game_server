@@ -1,40 +1,43 @@
 -module(tcp_server).
 
 -export([start_link/1, stop/0]).
--export([accept_loop/1]).
+-export([accepts_then_listens_for_upcoming_connection/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
 -include("include/account.hrl").
 
--record(state, {loop,
-		lsocket}).
+-record(state, {loop :: {string(), string()},
+		lsocket 
+	       }).
 
 start_link(Loop) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, Loop, []).
+
+stop() -> 
+    gen_server:cast(?MODULE, stop).
 
 init(Loop) ->
     process_flag(trap_exit, true),
     {ok, LSocket} = gen_tcp:listen(?PORT, ?TCP_OPTIONS),
     State = #state{lsocket = LSocket, loop = Loop},
-    {ok, accept(State)}.
+    {ok, start_accepting_process(State)}.
 
-accept_loop({Server, LSocket, {M, F}}) ->
-    {ok, Socket} = gen_tcp:accept(LSocket),
-    gen_server:cast(Server, {accepted, self()}),
-    Name = binary_to_list(term_to_binary(Socket)),
-    M:F(Name).
-
-accept(State = #state{lsocket=LSocket, loop = Loop}) ->
+start_accepting_process(State) ->
     process_flag(trap_exit, true),
-    proc_lib:spawn_link(?MODULE, accept_loop, [{self(), LSocket, Loop}]),
+    proc_lib:spawn_link(?MODULE, 
+			accepts_then_listens_for_upcoming_connection,
+			[{self(), State#state.lsocket, State#state.loop}]),
     State.
 
-stop() -> 
-    gen_server:cast(?MODULE, stop).
+accepts_then_listens_for_upcoming_connection({Server, LSocket, {M, F}}) ->
+    {ok, Socket} = gen_tcp:accept(LSocket),
+    gen_server:cast(Server, accepted),
+    UniqueExtension = binary_to_list(term_to_binary(Socket)),
+    M:F(UniqueExtension).
 
-handle_cast({accepted, _Pid}, State=#state{}) ->
-    {noreply, accept(State)};
+handle_cast(accepted, State) ->
+    {noreply, start_accepting_process(State)};
 handle_cast(stop, State) ->
     {stop, normal, State}.
 
