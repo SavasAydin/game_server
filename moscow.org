@@ -2,12 +2,17 @@ game_server
 
 ===========
 
-A Generic game server developed using Erlang. Aims to host online games. 
+A Generic tcp server developed using Erlang.
 
 MUST
 
 M1: A tcp server accepts connections on specified port from one or more computers.
-      
+
+Tcp server process is only responsible for listening incoming connections.
+When a connection is accepted, it adds a child process dynamically for each
+connection that handles incoming messages and awaits for new connections.  
+It allows tcp server to accept more than one connection.
+
 M2: User can register.
 
 -spec(register(string(),string()) ->  ok | {error, already_exist}). 
@@ -17,6 +22,7 @@ Register command stores username and password in Mnesia database.
 M3: Mnesia is to store user information
 
 M4: Client can deregister.
+
 -spec(deregister(string(),string()) -> ok | {error, not_exist}). 
 				     
 SHOULD
