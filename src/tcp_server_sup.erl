@@ -12,7 +12,7 @@ stop() ->
 
 init([]) ->
     RestartStrategy = {rest_for_one, 5, 2000},
-    TcpServer = child(tcp_server, worker),
+    TcpServer = child(tcp_server, worker, {message_handler, start_handler}),
     MsgHandlerSup = child(msg_handler_sup, supervisor),
     Children = [TcpServer, MsgHandlerSup],
     {ok, {RestartStrategy, Children}}.
@@ -20,3 +20,8 @@ init([]) ->
 child(Module, Type) ->
     {Module, {Module, start_link, []},
      permanent, brutal_kill, Type, [Module]}.
+child(Module, Type, Args) ->
+    {Module, {Module, start_link, [Args]},
+     permanent, brutal_kill, Type, [Module]}.
+
+
